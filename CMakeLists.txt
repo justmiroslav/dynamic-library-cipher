@@ -3,4 +3,9 @@ project(dynamic_library_cipher)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(dynamic_library_cipher main.cpp)
+add_library(caesar SHARED caesar.cpp)
+
+set_target_properties(caesar PROPERTIES PREFIX "")
+set_target_properties(caesar PROPERTIES SUFFIX ".dll")
+
+target_compile_definitions(caesar PRIVATE CAESAR_EXPORTS)
