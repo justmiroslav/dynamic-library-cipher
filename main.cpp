@@ -1,62 +1,25 @@
 #include <iostream>
-#include <cstring>
+#include <windows.h>
 using namespace std;
 
-char* encrypt(const char* rawText, int key) {
-    if (key < 1 || key > 26) {
-        cout << "Key must be between 1 and 26 for encryption." << endl;
-        return nullptr;
-    }
-
-    int textLen = strlen(rawText);
-    char* encryptedText = new char[textLen + 1];
-    const char* lowerAlphabet = "abcdefghijklmnopqrstuvwxyz";
-    const char* upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int alpLen = strlen(upperAlphabet);
-
-    for (int i = 0; i < textLen; i++) {
-        if (isalpha(rawText[i])) {
-            if (islower(rawText[i])) {
-                encryptedText[i] = lowerAlphabet[(rawText[i] - 'a' + key + alpLen) % alpLen];
-            } else {
-                encryptedText[i] = upperAlphabet[(rawText[i] - 'A' + key + alpLen) % alpLen];
-            }
-        } else {
-            encryptedText[i] = rawText[i];
-        }
-    }
-    encryptedText[textLen] = '\0';
-    return encryptedText;
-}
-
-char* decrypt(const char* encryptedText, int key) {
-    if (key < 1 || key > 26) {
-        cout << "Key must be between 1 and 26 for encryption." << endl;
-        return nullptr;
-    }
-
-    int textLen = strlen(encryptedText);
-    char* decryptedText = new char[textLen + 1];
-    const char* lowerAlphabet = "abcdefghijklmnopqrstuvwxyz";
-    const char* upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int alpLen = strlen(upperAlphabet);
-
-    for (int i = 0; i < textLen; i++) {
-        if (isalpha(encryptedText[i])) {
-            if (islower(encryptedText[i])) {
-                decryptedText[i] = lowerAlphabet[(encryptedText[i] - 'a' - key + alpLen) % alpLen];
-            } else {
-                decryptedText[i] = upperAlphabet[(encryptedText[i] - 'A' - key + alpLen) % alpLen];
-            }
-        } else {
-            decryptedText[i] = encryptedText[i];
-        }
-    }
-    decryptedText[textLen] = '\0';
-    return decryptedText;
-}
+typedef char* (*encrypt_ptr_t)(const char*, int);
+typedef char* (*decrypt_ptr_t)(const char*, int);
 
 int main() {
+    HMODULE handle = LoadLibrary(TEXT("caesar.dll"));
+
+    if (handle == nullptr || handle == INVALID_HANDLE_VALUE) {
+        cout << "Lib not found" << endl;
+        return 1;
+    }
+    encrypt_ptr_t encrypt_ptr = (encrypt_ptr_t)GetProcAddress(handle, "encrypt");
+    decrypt_ptr_t decrypt_ptr = (decrypt_ptr_t)GetProcAddress(handle, "decrypt");
+
+    if (encrypt_ptr == nullptr || decrypt_ptr == nullptr) {
+        cout << "Functions not found in DLL" << endl;
+        return 1;
+    }
+
     char base_text[1000];
     int key, command;
     while (true) {
@@ -69,7 +32,7 @@ int main() {
             cout << "Enter encryption key: " << endl;
             cin >> key;
             cin.ignore();
-            char* encryptedText = encrypt(base_text, key);
+            char* encryptedText = encrypt_ptr(base_text, key);
             cout << "Encrypted text: " << encryptedText << endl;
             delete[] encryptedText;
         } else if (command == 2) {
@@ -78,7 +41,7 @@ int main() {
             cout << "Enter decryption key: " << endl;
             cin >> key;
             cin.ignore();
-            char* decryptedText = decrypt(base_text, key);
+            char* decryptedText = decrypt_ptr(base_text, key);
             cout << "Decrypted text: " << decryptedText << endl;
             delete[] decryptedText;
         } else if (command == 3) {
@@ -88,5 +51,8 @@ int main() {
             cout << "Enter a valid command" << endl;
         }
     }
+
+    FreeLibrary(handle);
+
     return 0;
 }
