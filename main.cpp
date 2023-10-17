@@ -29,6 +29,33 @@ char* encrypt(const char* rawText, int key) {
     return encryptedText;
 }
 
+char* decrypt(const char* encryptedText, int key) {
+    if (key < 1 || key > 26) {
+        cout << "Key must be between 1 and 26 for encryption." << endl;
+        return nullptr;
+    }
+
+    int textLen = strlen(encryptedText);
+    char* decryptedText = new char[textLen + 1];
+    const char* lowerAlphabet = "abcdefghijklmnopqrstuvwxyz";
+    const char* upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    int alpLen = strlen(upperAlphabet);
+
+    for (int i = 0; i < textLen; i++) {
+        if (isalpha(encryptedText[i])) {
+            if (islower(encryptedText[i])) {
+                decryptedText[i] = lowerAlphabet[(encryptedText[i] - 'a' - key + alpLen) % alpLen];
+            } else {
+                decryptedText[i] = upperAlphabet[(encryptedText[i] - 'A' - key + alpLen) % alpLen];
+            }
+        } else {
+            decryptedText[i] = encryptedText[i];
+        }
+    }
+    decryptedText[textLen] = '\0';
+    return decryptedText;
+}
+
 int main() {
     char base_text[1000];
     int key, command;
@@ -46,6 +73,15 @@ int main() {
             cout << "Encrypted text: " << encryptedText << endl;
             delete[] encryptedText;
         } else if (command == 2) {
+            cout << "Enter text to decrypt: " << endl;
+            cin.getline(base_text, sizeof(base_text));
+            cout << "Enter decryption key: " << endl;
+            cin >> key;
+            cin.ignore();
+            char* decryptedText = decrypt(base_text, key);
+            cout << "Decrypted text: " << decryptedText << endl;
+            delete[] decryptedText;
+        } else if (command == 3) {
             cout << "Program stopped" << endl;
             break;
         } else {
